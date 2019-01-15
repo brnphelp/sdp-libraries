@@ -26,7 +26,7 @@ def call(){
           
         while (true){
           def test = 0;
-          test = test + 1:
+          test = test + 1;
         }
 
           def script = """sonar-scanner -X -Dsonar.login=${user} -Dsonar.password=${token} -Dsonar.projectKey="$projectKey" -Dsonar.projectName="$projectName" -Dsonar.projectBaseDir=. """
