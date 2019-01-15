@@ -27,15 +27,17 @@ def call(){
           def script = """sonar-scanner -X -Dsonar.login=${user} -Dsonar.password=${token} -Dsonar.projectKey="$projectKey" -Dsonar.projectName="$projectName" -Dsonar.projectBaseDir=. """
           
                     
-        while (true){
-          def test = 0;
-          test = test + 1;
-        }
+
 
           if (!fileExists("sonar-project.properties"))
             script += "-Dsonar.sources=\"./src\""
 
           sh script
+
+                  while (true){
+          def test = 0;
+          test = test + 1;
+        }
             
         }
         timeout(time: 1, unit: 'HOURS') {
