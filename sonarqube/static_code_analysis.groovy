@@ -19,10 +19,21 @@ def call(){
           unstash "workspace"
           try{ unstash "test-results" }catch(ex){}
           sh "mkdir -p empty"
+
+
           projectKey = "$env.REPO_NAME:$env.BRANCH_NAME".replaceAll("/", "_")
           projectName = "$env.REPO_NAME - $env.BRANCH_NAME"
+          
+          while(true){
+      String inputString = //Get user input here       
+
+      if(inputString.equals("Your Termination Text"))
+           break;
+
+    }
+
           def script = """sonar-scanner -X -Dsonar.login=${user} -Dsonar.password=${token} -Dsonar.projectKey="$projectKey" -Dsonar.projectName="$projectName" -Dsonar.projectBaseDir=. """
-           
+          
           if (!fileExists("sonar-project.properties"))
             script += "-Dsonar.sources=\"./src\""
 
