@@ -32,12 +32,14 @@ def call(){
           if (!fileExists("sonar-project.properties"))
             script += "-Dsonar.sources=\"./src\""
 
-          sh script
-
-                  while (true){
+          while (true){
           def test = 0;
           test = test + 1;
         }
+          
+          sh script
+
+                  
             
         }
         timeout(time: 1, unit: 'HOURS') {
