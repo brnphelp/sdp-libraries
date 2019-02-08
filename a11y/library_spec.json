@@ -1,0 +1,18 @@
+{
+    "long_name": "A11y Machine",
+    "short_name": "a11y",
+    "description": "Automated accessibility testing tool which crawls and tests pages of any Web application to produce detailed reports",
+    "configurations": [
+      {
+        "name": "url",
+        "description": "URL of the website that A11y will run its scans against"
+      }
+    ],
+    "steps": [
+      {
+        "name": "accessibility_compliance_test()",
+        "description": "do something",
+        "expose": true
+      }
+    ]
+  }

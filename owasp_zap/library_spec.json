@@ -1,0 +1,30 @@
+{
+    "long_name": "OWASP Zed Attack Proxy (ZAP)",
+    "short_name": "owasp_zap",
+    "description": "Tool that automatically detects security vulnerabilities in web applications",
+    "configurations": [
+      {
+        "name": "target",
+        "description": "URL of the website that OWASP ZAP will run its scans against. If no target URL is specified, the target is set to env.FRONTEND_URL if it's already defined."
+      },
+      {
+        "name": "vulerability_threshold",
+        "description": "Determines minimum alert level to included in reports",
+        "options": [
+          "Ignore",
+          "Low",
+          "Medium",
+          "High",
+          "Informational"
+        ],
+        "default": "High"
+      }
+    ],
+    "steps": [
+      {
+        "name": "penetration_test()",
+        "description": "Enables OWASP ZAP as a Jenkins step",
+        "expose": true
+      }
+    ]
+  }

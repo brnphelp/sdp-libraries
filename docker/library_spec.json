@@ -1,0 +1,38 @@
+{
+    "long_name": "Docker",
+    "short_name": "docker",
+    "description": "Builds Docker images and push them into a Docker repository",
+    "steps": [
+      {
+        "name": "build()",
+        "description": "do something",
+        "expose": true
+      },
+      {
+        "name": "get_images_to_build()",
+        "description": "do something",
+        "parameters": [
+          {
+            "name": "build_strategies",
+            "description": "Defines the type of Docker build to be used.",
+            "options": [
+              "docker-compose",
+              "modules",
+              "dockerfile"
+            ],
+            "default": "dockerfile"
+          }
+        ]
+      },
+      {
+        "name": "login_to_registry()",
+        "description": "do something",
+        "expose": true
+      },
+      {
+        "name": "retag()",
+        "description": "do something",
+        "expose": true
+      }
+    ]
+  }

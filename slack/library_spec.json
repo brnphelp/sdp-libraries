@@ -1,0 +1,12 @@
+{
+    "long_name": "Slack",
+    "short_name": "slack",
+    "description": "Collection of tools and services that helps teams collaborate and work more efficiently",
+    "steps": [
+      {
+        "name": "slack()",
+        "description": "do something",
+        "expose": true
+      }
+    ]
+  }
