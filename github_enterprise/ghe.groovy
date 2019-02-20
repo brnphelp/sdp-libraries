@@ -6,7 +6,7 @@
 import org.kohsuke.github.*
 
 void call() {
-  error "Step ghe() is supported. Did you mean ghe.gh(), ghe.getRepo(), or ghe.pr()?"
+  error "Step ghe() is not supported. Did you mean ghe.gh(), ghe.getRepo(), or ghe.pr()?"
   return
 }
 
