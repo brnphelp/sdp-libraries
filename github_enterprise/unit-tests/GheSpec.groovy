@@ -8,10 +8,26 @@ public class GheSpec extends JenkinsPipelineSpecification {
     public DummyException(String _message) { super( _message ); }
   }
 
-  def ghApiLib = [kohsuke: [github: [GitHub: [connectToEnterprise: { url, pwd -> echo "url: ${url}"; echo "pwd: ${pwd}"; echo "Did call connectToEnterprise with url: ${url} and token: ${pwd}"; [getRepository: {string -> println "${string}"}]}]]]]
+  /*
+   * leaving both ghApiLib and ghApiLib2 in here for reference
+   * this is two ways to handle directly calling a method from a library
+   * w/o actually importing that library in the script.
+   * i.e. org.kohsuke.github.GitHub.connectToEnterprise(ghUrl, PAT)
+   */
+  def ghApiLib = [kohsuke: [github: [GitHub: [connectToEnterprise: { url, pwd -> echo "url: ${url}"; echo "pwd: ${pwd}"; echo "Did call connectToEnterprise with url: ${url} and token: ${pwd}"}]]]]
+  def ghApiLib2 = null
+  def baseUrl = "https://my-github-enterprise.example.com"
+
 
   def setup() {
     Ghe = loadPipelineScriptForTest("github_enterprise/ghe.groovy")
+
+    explicitlyMockPipelineVariable("GitHub")
+    ghApiLib2 = [kohsuke: [github: [GitHub: getPipelineMock("GitHub")]]]
+
+    Ghe.getBinding().setVariable("env", [GIT_URL: "${baseUrl}/my-org/my-repo.git", ORG_NAME: "testorg", REPO_NAME: "testrepo", CHANGE_ID: "25"])
+    Ghe.getBinding().setVariable("USER", "testuser")
+    Ghe.getBinding().setVariable("PAT", "testtoken")
   }
 
   /** ghe() or ghe.call()  **/
@@ -27,12 +43,7 @@ public class GheSpec extends JenkinsPipelineSpecification {
   /** ghe.gh() **/
   def "The gh() step uses the credential with id: github" () {
     setup:
-      Ghe.getBinding().setVariable("USER", "testuser")
-      Ghe.getBinding().setVariable("PAT", "testtoken")
-      //Ghe.getBinding().setVariable("org", ghApiLib)
-      Ghe.getBinding().setVariable("env", [GIT_URL: "https://my-github-enterprise.example.com/my-org/my-repo.git"])
-      explicitlyMockPipelineVariable("org")
-      getPipelineMock("org")(_) >> explicitlyMockPipelineVariable("kohsuke")
+      Ghe.getBinding().setVariable("org", ghApiLib)
     when:
       def ghbuilder = Ghe.gh()
     then:
@@ -41,49 +52,57 @@ public class GheSpec extends JenkinsPipelineSpecification {
 
   def "The gh() step uses the GIT_URL env var to build the API URL" () {
     setup:
-      Ghe.getBinding().setVariable("USER", "testuser")
-      Ghe.getBinding().setVariable("PAT", "testtoken")
       Ghe.getBinding().setVariable("org", ghApiLib)
-      def baseUrl = "https://my-github-enterprise.example.com"
-      Ghe.getBinding().setVariable("env", [GIT_URL: "${baseUrl}/my-org/my-repo.git"])
     when:
       def ghbuilder = Ghe.gh()
     then:
-      // relies on 'echo' call in ghApiLab
+      // relies on 'echo' call in ghApiLib
       1 * getPipelineMock('echo')("url: ${baseUrl}/api/v3")
 
   }
 
   def "The gh() step uses the connectToEnterprise() step with the given URL and password to connect" () {
     setup:
-      Ghe.getBinding().setVariable("USER", "testuser")
-      Ghe.getBinding().setVariable("PAT", "testtoken")
-      Ghe.getBinding().setVariable("org", ghApiLib)
-      def baseUrl = "https://my-github-enterprise.example.com"
-      Ghe.getBinding().setVariable("env", [GIT_URL: "${baseUrl}/my-org/my-repo.git"])
+      explicitlyMockPipelineVariable("GitHub")
+      Ghe.getBinding().setVariable("org", ghApiLib2)
     when:
-      def ghbuilder = Ghe.gh()
+      def test_gh_connection = Ghe.gh()
     then:
-      // relies on 'echo' call in ghApiLab
-      1 * getPipelineMock('echo')("Did call connectToEnterprise with url: ${baseUrl}/api/v3 and token: testtoken")
+      1 * getPipelineMock("GitHub.connectToEnterprise")("${baseUrl}/api/v3", "testtoken")
   }
 
   /** ghe.getRepo() **/
-  // def "The getRepo() step invokes the gh() step gets the repository specified by ORG_NAME and REPO_NAME env vars" () {
-  //   setup:
-  //     def baseUrl = "https://my-github-enterprise.example.com"
-  //     Ghe.getBinding().setVariable("org", ghApiLib)
-  //     Ghe.getBinding().setVariable("USER", "testuser")
-  //     Ghe.getBinding().setVariable("PAT", "testtoken")
-  //     Ghe.getBinding().setVariable("env", [GIT_URL: "${baseUrl}/my-org/my-repo.git", ORG_NAME: "testorg", REPO_NAME: "testrepo"])
-  //   when:
-  //     repo = Ghe.getRepo()
-  //   then:
-  //     true
-
-      //1 * getPipelineMock("GitHubBuilder.getRepository")("testorg/testrepo")
-//  }
+  def "The getRepo() step uses the GH server connection made using gh() and gets the repository env.REPO_NAME from env.ORG_NAME" () {
+    setup:
+      Ghe.getBinding().setVariable("org", ghApiLib2)
+      explicitlyMockPipelineVariable("gh_connection")
+      //the return value of withCredentials is the return value of gh()
+      getPipelineMock("withCredentials")(_, _ as Closure) >> { getPipelineMock("gh_connection") }
+    when:
+      def test_gh_repository = Ghe.getRepo()
+    then:
+      1  * getPipelineMock("gh_connection.getRepository")("testorg/testrepo")
+  }
 
   /** ghe.pr() **/
+  def "The pr() step queries the repository from getRepo() for the PR whose number matches env.CHANGE_ID" () {
+    setup:
+      Ghe.getBinding().setVariable("org", ghApiLib2)
+      explicitlyMockPipelineVariable("gh_connection")
+      explicitlyMockPipelineVariable("gh_repository")
+      //the return value of withCredentials is the return value of gh()
+      getPipelineMock("withCredentials")(_, _ as Closure) >> { getPipelineMock("gh_connection") }
+      getPipelineMock("gh_connection.getRepository")(_) >> { getPipelineMock("gh_repository") }
+    when:
+      def test_gh_pr = Ghe.pr()
+    then:
+      1 * getPipelineMock("gh_repository.getPullRequest")(25)
+  }
+
+  /*
+   * Note: not testing any corner cases with CHANGE_ID b/c we expect it to be
+   * handled by either github_enterprise_constructor or the external
+   * getPullRequest(int) method.
+   */
 
 }
